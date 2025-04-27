@@ -13,9 +13,9 @@ use crate::{Request, Response};
 ///
 /// ```
 /// use bytes::Bytes;
-/// use hyper::{body, Request, Response, Version};
+/// use hyper2::{body, Request, Response, Version};
 /// use http_body_util::Full;
-/// use hyper::service::service_fn;
+/// use hyper2::service::service_fn;
 ///
 /// let service = service_fn(|req: Request<body::Incoming>| async move {
 ///     if req.version() == Version::HTTP_11 {

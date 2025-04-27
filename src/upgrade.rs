@@ -1,6 +1,6 @@
 //! HTTP Upgrades
 //!
-//! This module deals with managing [HTTP Upgrades][mdn] in hyper. Since
+//! This module deals with managing [HTTP Upgrades][mdn] in hyper2. Since
 //! several concepts in HTTP allow for first talking HTTP, and then converting
 //! to a different protocol, this module conflates them into a single API.
 //! Those include:
@@ -28,7 +28,7 @@
 //!
 //! Receiving upgrade requests in a server requires you to check the relevant
 //! headers in a `Request`, and if an upgrade should be done, you then send the
-//! corresponding headers in a response. To then wait for hyper to finish the
+//! corresponding headers in a response. To then wait for hyper2 to finish the
 //! upgrade, you call `on()` with the `Request`, and then can spawn a task
 //! awaiting it.
 //!
@@ -37,7 +37,7 @@
 //! See [this example][example] showing how upgrades work with both
 //! Clients and Servers.
 //!
-//! [example]: https://github.com/hyperium/hyper/blob/master/examples/upgrades.rs
+//! [example]: https://github.com/hyperium/hyper2/blob/master/examples/upgrades.rs
 
 use std::any::TypeId;
 use std::error::Error as StdError;

@@ -182,7 +182,7 @@ where
     ///
     /// - Usually you want origin-form (`/path?query`).
     /// - For sending to an HTTP proxy, you want to send in absolute-form
-    ///   (`https://hyper.rs/guides`).
+    ///   (`https://hyper2.rs/guides`).
     ///
     /// This is however not enforced or validated and it is up to the user
     /// of this method to ensure the `Uri` is correct for their intended purpose.
@@ -411,10 +411,10 @@ impl Builder {
     /// but may also improve performance when an IO transport doesn't
     /// support vectored writes well, such as most TLS implementations.
     ///
-    /// Setting this to true will force hyper to use queued strategy
+    /// Setting this to true will force hyper2 to use queued strategy
     /// which may eliminate unnecessary cloning on some TLS backends
     ///
-    /// Default is `auto`. In this mode hyper will try to guess which
+    /// Default is `auto`. In this mode hyper2 will try to guess which
     /// mode to use
     pub fn writev(&mut self, enabled: bool) -> &mut Builder {
         self.h1_writev = Some(enabled);

@@ -6,9 +6,9 @@
 #![cfg_attr(all(test, feature = "nightly"), feature(test))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-//! # hyper
+//! # hyper2
 //!
-//! hyper is a **fast** and **correct** HTTP implementation written in and for Rust.
+//! hyper2 is a **fast** and **correct** HTTP implementation written in and for Rust.
 //!
 //! ## Features
 //!
@@ -19,12 +19,12 @@
 //! - Extensive production use
 //! - [Client](client/index.html) and [Server](server/index.html) APIs
 //!
-//! If just starting out, **check out the [Guides](https://hyper.rs/guides/1/)
+//! If just starting out, **check out the [Guides](https://hyper2.rs/guides/1/)
 //! first.**
 //!
 //! ## "Low-level"
 //!
-//! hyper is a lower-level HTTP library, meant to be a building block
+//! hyper2 is a lower-level HTTP library, meant to be a building block
 //! for libraries and applications.
 //!
 //! If looking for just a convenient HTTP client, consider the
@@ -32,14 +32,14 @@
 //!
 //! # Optional Features
 //!
-//! hyper uses a set of [feature flags] to reduce the amount of compiled code.
+//! hyper2 uses a set of [feature flags] to reduce the amount of compiled code.
 //! It is possible to just enable certain features over others. By default,
-//! hyper does not enable any features but allows one to enable a subset for
+//! hyper2 does not enable any features but allows one to enable a subset for
 //! their use case. Below is a list of the available feature flags. You may
 //! also notice above each function, struct and trait there is listed one or
 //! more feature flags that are required for that item to be used.
 //!
-//! If you are new to hyper it is possible to enable the `full` feature flag
+//! If you are new to hyper2 it is possible to enable the `full` feature flag
 //! which will enable all public APIs. Beware though that this will pull in
 //! many extra dependencies that you may not need.
 //!
@@ -54,12 +54,12 @@
 //!
 //! ## Unstable Features
 //!
-//! hyper includes a set of unstable optional features that can be enabled through the use of a
+//! hyper2 includes a set of unstable optional features that can be enabled through the use of a
 //! feature flag and a [configuration flag].
 //!
 //! The following is a list of feature flags and their corresponding `RUSTFLAG`:
 //!
-//! - `ffi`: Enables C API for hyper `hyper_unstable_ffi`.
+//! - `ffi`: Enables C API for hyper2 `hyper_unstable_ffi`.
 //! - `tracing`: Enables debug logging with `hyper_unstable_tracing`.
 //!
 //! For example:
@@ -72,20 +72,20 @@
 //!
 //! # Stability
 //!
-//! It's worth talking a bit about the stability of hyper. hyper's API follows
+//! It's worth talking a bit about the stability of hyper2. hyper2's API follows
 //! [SemVer](https://semver.org). Breaking changes will only be introduced in
 //! major versions, if ever. New additions to the API, such as new types,
 //! methods, or traits will only be added in minor versions.
 //!
-//! Some parts of hyper are documented as NOT being part of the stable API. The
+//! Some parts of hyper2 are documented as NOT being part of the stable API. The
 //! following is a brief list, you can read more about each one in the relevant
 //! part of the documentation.
 //!
 //! - Downcasting error types from `Error::source()` is not considered stable.
 //! - Private dependencies use of global variables is not considered stable.
-//!   So, if a dependency uses `log` or `tracing`, hyper doesn't promise it
+//!   So, if a dependency uses `log` or `tracing`, hyper2 doesn't promise it
 //!   will continue to do so.
-//! - Behavior from default options is not stable. hyper reserves the right to
+//! - Behavior from default options is not stable. hyper2 reserves the right to
 //!   add new options that are enabled by default which might alter the
 //!   behavior, for the purposes of protection. It is also possible to _change_
 //!   what the default options are set to, also in efforts to protect the

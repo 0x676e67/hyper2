@@ -7,12 +7,12 @@
 //!
 //! If you are looking for a convenient HTTP client, then you may wish to
 //! consider [reqwest](https://github.com/seanmonstar/reqwest) for a high level
-//! client or [`hyper-util`'s client](https://docs.rs/hyper-util/latest/hyper_util/client/index.html)
+//! client or [`hyper2-util`'s client](https://docs.rs/hyper2-util/latest/hyper_util/client/index.html)
 //! if you want to keep it more low level / basic.
 //!
 //! ## Example
 //!
-//! See the [client guide](https://hyper.rs/guides/1/client/basic/).
+//! See the [client guide](https://hyper2.rs/guides/1/client/basic/).
 
 #[cfg(feature = "http1")]
 pub mod http1;

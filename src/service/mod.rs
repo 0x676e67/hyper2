@@ -5,7 +5,7 @@
 //! `async fn(Request) -> Result<Response, Error>`.
 //!
 //! The argument and return value isn't strictly required to be for HTTP.
-//! Therefore, hyper uses several "trait aliases" to reduce clutter around
+//! Therefore, hyper2 uses several "trait aliases" to reduce clutter around
 //! bounds. These are:
 //!
 //! - `HttpService`: This is blanketly implemented for all types that
@@ -13,7 +13,7 @@
 //!
 //! # HttpService
 //!
-//! In hyper, especially in the server setting, a `Service` is usually bound
+//! In hyper2, especially in the server setting, a `Service` is usually bound
 //! to a single connection. It defines how to respond to **all** requests that
 //! connection will receive.
 //!

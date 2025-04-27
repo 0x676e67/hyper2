@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-//! Various runtimes for hyper
+//! Various runtimes for hyper2
 use std::{
     future::Future,
     pin::Pin,

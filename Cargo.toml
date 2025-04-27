@@ -7,7 +7,7 @@ documentation = "https://docs.rs/hyper2"
 repository = "https://github.com/penumbra-x/hyper2"
 license = "MIT"
 authors = ["0x676e67 <gngppz@gmail.com>"]
-keywords = ["http", "hyper", "hyperium"]
+keywords = ["http", "hyper2", "hyperium"]
 categories = ["network-programming", "web-programming::http-client", "web-programming::http-server"]
 edition = "2021"
 rust-version = "1.63" # keep in sync with MSRV.md dev doc
@@ -108,7 +108,7 @@ generation = false
 subdirectory = false
 
 [package.metadata.capi.install.include]
-asset = [{ from="capi/include/hyper.h" }]
+asset = [{ from="capi/include/hyper2.h" }]
 
 [profile.release]
 codegen-units = 1

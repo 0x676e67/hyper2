@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Version**
-List the version(s) of `hyper`, and any relevant hyper dependency (such as `h2` if this is related to HTTP/2).
+List the version(s) of `hyper2`, and any relevant hyper2 dependency (such as `h2` if this is related to HTTP/2).
 
 **Platform**
 The output of `uname -a` (UNIX), or version and 32 or 64-bit (Windows)

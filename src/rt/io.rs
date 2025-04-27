@@ -16,7 +16,7 @@ use std::task::{Context, Poll};
 // Frankly, the last point is the entire reason we're doing this. We want to
 // have forwards-compatibility with an eventually stable io-uring runtime. We
 // don't need that to work right away. But it must be possible to add in here
-// without breaking hyper 1.0.
+// without breaking hyper2 1.0.
 //
 // While in here, if there's small tweaks to poll_read or poll_write that would
 // allow even the "slow" path to be faster, such as if someone didn't remember

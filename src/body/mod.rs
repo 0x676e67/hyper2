@@ -5,13 +5,13 @@
 //! allows applications to not use memory they don't need, and allows exerting
 //! back-pressure on connections by only reading when asked.
 //!
-//! There are two pieces to this in hyper:
+//! There are two pieces to this in hyper2:
 //!
 //! - **The [`Body`] trait** describes all possible bodies.
-//!   hyper allows any body type that implements `Body`, allowing
+//!   hyper2 allows any body type that implements `Body`, allowing
 //!   applications to have fine-grained control over their streaming.
 //! - **The [`Incoming`] concrete type**, which is an implementation
-//!   of `Body`, and returned by hyper as a "receive stream" (so, for server
+//!   of `Body`, and returned by hyper2 as a "receive stream" (so, for server
 //!   requests and client responses).
 //!
 //! There are additional implementations available in [`http-body-util`][],

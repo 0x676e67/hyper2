@@ -1,6 +1,6 @@
 //! HTTP Client
 //!
-//! hyper provides HTTP over a single connection. See the [`conn`] module.
+//! hyper2 provides HTTP over a single connection. See the [`conn`] module.
 //!
 //! ## Examples
 //!
@@ -8,8 +8,8 @@
 //!
 //! * [`client_json`] - A simple program that GETs some json, reads the body asynchronously, parses it with serde and outputs the result.
 //!
-//! [`client`]: https://github.com/hyperium/hyper/blob/master/examples/client.rs
-//! [`client_json`]: https://github.com/hyperium/hyper/blob/master/examples/client_json.rs
+//! [`client`]: https://github.com/hyperium/hyper2/blob/master/examples/client.rs
+//! [`client_json`]: https://github.com/hyperium/hyper2/blob/master/examples/client_json.rs
 
 cfg_feature! {
     #![any(feature = "http1", feature = "http2")]

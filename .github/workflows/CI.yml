@@ -199,7 +199,7 @@ jobs:
         run: cargo test --features client,http1,http2,ffi --lib
 
   ffi-header:
-    name: Verify hyper.h is up to date
+    name: Verify hyper2.h is up to date
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -225,7 +225,7 @@ jobs:
           RUSTFLAGS: --cfg hyper_unstable_ffi
         run: cargo build --features client,http1,http2,ffi
 
-      - name: Ensure that hyper.h is up to date
+      - name: Ensure that hyper2.h is up to date
         run: ./capi/gen_header.sh --verify
 
   ffi-cargo-c:

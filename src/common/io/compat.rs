@@ -1,9 +1,9 @@
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
-/// This adapts from `hyper` IO traits to the ones in Tokio.
+/// This adapts from `hyper2` IO traits to the ones in Tokio.
 ///
-/// This is currently used by `h2`, and by hyper internal unit tests.
+/// This is currently used by `h2`, and by hyper2 internal unit tests.
 #[derive(Debug)]
 pub(crate) struct Compat<T>(pub(crate) T);
 
