@@ -4,11 +4,11 @@ use std::env;
 
 use bytes::Bytes;
 use http_body_util::{BodyExt, Empty};
-use hyper::Request;
+use hyper2::Request;
 use tokio::io::{self, AsyncWriteExt as _};
 use tokio::net::TcpStream;
 
-#[path = "../benches/support/mod.rs"]
+#[path = "module/support.rs"]
 mod support;
 use support::TokioIo;
 
@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
 
     // HTTPS requires picking a TLS implementation, so give a better
     // warning if the user tries to request an 'https' URL.
-    let url = url.parse::<hyper::Uri>().unwrap();
+    let url = url.parse::<hyper2::Uri>().unwrap();
     if url.scheme_str() != Some("http") {
         println!("This example only works with 'http' URLs.");
         return Ok(());
@@ -39,14 +39,14 @@ async fn main() -> Result<()> {
     fetch_url(url).await
 }
 
-async fn fetch_url(url: hyper::Uri) -> Result<()> {
+async fn fetch_url(url: hyper2::Uri) -> Result<()> {
     let host = url.host().expect("uri has no host");
     let port = url.port_u16().unwrap_or(80);
     let addr = format!("{}:{}", host, port);
     let stream = TcpStream::connect(addr).await?;
     let io = TokioIo::new(stream);
 
-    let (mut sender, conn) = hyper::client::conn::http1::handshake(io).await?;
+    let (mut sender, conn) = hyper2::client::conn::http1::handshake(io).await?;
     tokio::task::spawn(async move {
         if let Err(err) = conn.await {
             println!("Connection failed: {:?}", err);
@@ -58,7 +58,7 @@ async fn fetch_url(url: hyper::Uri) -> Result<()> {
     let path = url.path();
     let req = Request::builder()
         .uri(path)
-        .header(hyper::header::HOST, authority.as_str())
+        .header(hyper2::header::HOST, authority.as_str())
         .body(Empty::<Bytes>::new())?;
 
     let mut res = sender.send_request(req).await?;

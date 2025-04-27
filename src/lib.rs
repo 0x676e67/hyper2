@@ -93,9 +93,6 @@
 #[doc(hidden)]
 pub use http;
 
-#[cfg(all(test, feature = "nightly"))]
-extern crate test;
-
 #[doc(no_inline)]
 pub use http::{header, HeaderMap, Method, Request, Response, StatusCode, Uri, Version};
 
@@ -111,15 +108,9 @@ pub mod body;
 mod common;
 mod error;
 pub mod ext;
-#[cfg(test)]
-mod mock;
 pub mod rt;
 pub mod service;
 pub mod upgrade;
-
-#[cfg(feature = "ffi")]
-#[cfg_attr(docsrs, doc(cfg(all(feature = "ffi", hyper_unstable_ffi))))]
-pub mod ffi;
 
 cfg_proto! {
     mod headers;
@@ -130,12 +121,6 @@ cfg_feature! {
     #![feature = "client"]
 
     pub mod client;
-}
-
-cfg_feature! {
-    #![feature = "server"]
-
-    pub mod server;
 }
 
 cfg_feature! {

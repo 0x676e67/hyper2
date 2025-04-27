@@ -23,10 +23,6 @@ cfg_client! {
     pub(crate) type ClientTransaction = role::Client;
 }
 
-cfg_server! {
-    pub(crate) type ServerTransaction = role::Server;
-}
-
 pub(crate) trait Http1Transaction {
     type Incoming;
     type Outgoing: Default;
@@ -74,23 +70,15 @@ pub(crate) struct ParseContext<'a> {
     h1_parser_config: ParserConfig,
     h1_max_headers: Option<usize>,
     preserve_header_case: bool,
-    #[cfg(feature = "ffi")]
-    preserve_header_order: bool,
-    h09_responses: bool,
-    #[cfg(feature = "ffi")]
-    on_informational: &'a mut Option<crate::ffi::OnInformational>,
+    h09_responses: bool
 }
 
 /// Passed to Http1Transaction::encode
 pub(crate) struct Encode<'a, T> {
     head: &'a mut MessageHead<T>,
     body: Option<BodyLength>,
-    #[cfg(feature = "server")]
-    keep_alive: bool,
     req_method: &'a mut Option<Method>,
     title_case_headers: bool,
-    #[cfg(feature = "server")]
-    date_header: bool,
 }
 
 /// Extra flags that a request "wants", like expect-continue or upgrades.

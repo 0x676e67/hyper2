@@ -295,6 +295,8 @@ impl ChunkedState {
     fn new() -> ChunkedState {
         ChunkedState::Start
     }
+
+    #[allow(clippy::too_many_arguments)]
     fn step<R: MemRead>(
         &self,
         cx: &mut Context<'_>,

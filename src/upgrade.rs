@@ -106,18 +106,12 @@ pub fn on<T: sealed::CanUpgrade>(msg: T) -> OnUpgrade {
     msg.on_upgrade()
 }
 
-#[cfg(all(
-    any(feature = "client", feature = "server"),
-    any(feature = "http1", feature = "http2"),
-))]
+#[cfg(all(feature = "client", any(feature = "http1", feature = "http2"),))]
 pub(super) struct Pending {
     tx: oneshot::Sender<crate::Result<Upgraded>>,
 }
 
-#[cfg(all(
-    any(feature = "client", feature = "server"),
-    any(feature = "http1", feature = "http2"),
-))]
+#[cfg(all(feature = "client", any(feature = "http1", feature = "http2"),))]
 pub(super) fn pending() -> (Pending, OnUpgrade) {
     let (tx, rx) = oneshot::channel();
     (
@@ -131,10 +125,7 @@ pub(super) fn pending() -> (Pending, OnUpgrade) {
 // ===== impl Upgraded =====
 
 impl Upgraded {
-    #[cfg(all(
-        any(feature = "client", feature = "server"),
-        any(feature = "http1", feature = "http2")
-    ))]
+    #[cfg(all(feature = "client", any(feature = "http1", feature = "http2")))]
     pub(super) fn new<T>(io: T, read_buf: Bytes) -> Self
     where
         T: Read + Write + Unpin + Send + 'static,
@@ -215,7 +206,7 @@ impl OnUpgrade {
         OnUpgrade { rx: None }
     }
 
-    #[cfg(all(any(feature = "client", feature = "server"), feature = "http1"))]
+    #[cfg(all(feature = "client", feature = "http1"))]
     pub(super) fn is_none(&self) -> bool {
         self.rx.is_none()
     }
@@ -248,10 +239,7 @@ impl fmt::Debug for OnUpgrade {
 
 // ===== impl Pending =====
 
-#[cfg(all(
-    any(feature = "client", feature = "server"),
-    any(feature = "http1", feature = "http2")
-))]
+#[cfg(all(feature = "client", any(feature = "http1", feature = "http2")))]
 impl Pending {
     pub(super) fn fulfill(self, upgraded: Upgraded) {
         trace!("pending upgrade fulfill");
@@ -354,10 +342,7 @@ mod sealed {
     }
 }
 
-#[cfg(all(
-    any(feature = "client", feature = "server"),
-    any(feature = "http1", feature = "http2"),
-))]
+#[cfg(all(feature = "client", any(feature = "http1", feature = "http2"),))]
 #[cfg(test)]
 mod tests {
     use super::*;

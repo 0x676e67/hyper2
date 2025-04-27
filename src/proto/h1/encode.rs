@@ -39,13 +39,7 @@ enum Kind {
     /// An Encoder for when Content-Length is set.
     ///
     /// Enforces that the body is not longer than the Content-Length header.
-    Length(u64),
-    /// An Encoder for when neither Content-Length nor Chunked encoding is set.
-    ///
-    /// This is mostly only used with HTTP/1.0 with a length. This kind requires
-    /// the connection to be closed when the body is finished.
-    #[cfg(feature = "server")]
-    CloseDelimited,
+    Length(u64)
 }
 
 #[derive(Debug)]
@@ -72,11 +66,6 @@ impl Encoder {
         Encoder::new(Kind::Length(len))
     }
 
-    #[cfg(feature = "server")]
-    pub(crate) fn close_delimited() -> Encoder {
-        Encoder::new(Kind::CloseDelimited)
-    }
-
     pub(crate) fn into_chunked_with_trailing_fields(self, trailers: Vec<HeaderValue>) -> Encoder {
         match self.kind {
             Kind::Chunked(_) => Encoder {
@@ -91,22 +80,12 @@ impl Encoder {
         matches!(self.kind, Kind::Length(0))
     }
 
-    #[cfg(feature = "server")]
-    pub(crate) fn set_last(mut self, is_last: bool) -> Self {
-        self.is_last = is_last;
-        self
-    }
-
     pub(crate) fn is_last(&self) -> bool {
         self.is_last
     }
 
     pub(crate) fn is_close_delimited(&self) -> bool {
-        match self.kind {
-            #[cfg(feature = "server")]
-            Kind::CloseDelimited => true,
-            _ => false,
-        }
+        false
     }
 
     pub(crate) fn is_chunked(&self) -> bool {
@@ -119,8 +98,6 @@ impl Encoder {
             Kind::Chunked(_) => Ok(Some(EncodedBuf {
                 kind: BufKind::ChunkedEnd(b"0\r\n\r\n"),
             })),
-            #[cfg(feature = "server")]
-            Kind::CloseDelimited => Ok(None),
             Kind::Length(n) => Err(NotEof(n)),
         }
     }
@@ -150,11 +127,6 @@ impl Encoder {
                     *remaining -= len as u64;
                     BufKind::Exact(msg)
                 }
-            }
-            #[cfg(feature = "server")]
-            Kind::CloseDelimited => {
-                trace!("close delimited write {}B", len);
-                BufKind::Exact(msg)
             }
         };
         EncodedBuf { kind }
@@ -250,12 +222,6 @@ impl Encoder {
                         false
                     }
                 }
-            }
-            #[cfg(feature = "server")]
-            Kind::CloseDelimited => {
-                trace!("close delimited write {}B", len);
-                dst.buffer(msg);
-                false
             }
         }
     }
@@ -504,29 +470,6 @@ mod tests {
         assert_eq!(dst, b"foo barb");
         assert!(encoder.is_eof());
         assert!(encoder.end::<()>().unwrap().is_none());
-    }
-
-    #[cfg(feature = "server")]
-    #[test]
-    fn eof() {
-        let mut encoder = Encoder::close_delimited();
-        let mut dst = Vec::new();
-
-        let msg1 = b"foo bar".as_ref();
-        let buf1 = encoder.encode(msg1);
-        dst.put(buf1);
-
-        assert_eq!(dst, b"foo bar");
-        assert!(!encoder.is_eof());
-        encoder.end::<()>().unwrap();
-
-        let msg2 = b"baz".as_ref();
-        let buf2 = encoder.encode(msg2);
-        dst.put(buf2);
-
-        assert_eq!(dst, b"foo barbaz");
-        assert!(!encoder.is_eof());
-        encoder.end::<()>().unwrap();
     }
 
     #[test]

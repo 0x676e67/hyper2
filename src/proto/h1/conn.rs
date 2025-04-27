@@ -1,12 +1,8 @@
 use std::fmt;
-#[cfg(feature = "server")]
-use std::future::Future;
 use std::io;
 use std::marker::{PhantomData, Unpin};
 use std::pin::Pin;
 use std::task::{Context, Poll};
-#[cfg(feature = "server")]
-use std::time::{Duration, Instant};
 
 use crate::rt::{Read, Write};
 use bytes::{Buf, Bytes};
@@ -19,12 +15,8 @@ use httparse::ParserConfig;
 use super::io::Buffered;
 use super::{Decoder, Encode, EncodedBuf, Encoder, Http1Transaction, ParseContext, Wants};
 use crate::body::DecodedLength;
-#[cfg(feature = "server")]
-use crate::common::time::Time;
 use crate::headers;
 use crate::proto::{BodyLength, MessageHead};
-#[cfg(feature = "server")]
-use crate::rt::Sleep;
 
 const H2_PREFACE: &[u8] = b"PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n";
 
@@ -58,23 +50,9 @@ where
                 method: None,
                 h1_parser_config: ParserConfig::default(),
                 h1_max_headers: None,
-                #[cfg(feature = "server")]
-                h1_header_read_timeout: None,
-                #[cfg(feature = "server")]
-                h1_header_read_timeout_fut: None,
-                #[cfg(feature = "server")]
-                h1_header_read_timeout_running: false,
-                #[cfg(feature = "server")]
-                date_header: true,
-                #[cfg(feature = "server")]
-                timer: Time::Empty,
                 preserve_header_case: false,
-                #[cfg(feature = "ffi")]
-                preserve_header_order: false,
                 title_case_headers: false,
                 h09_responses: false,
-                #[cfg(feature = "ffi")]
-                on_informational: None,
                 notify_read: false,
                 reading: Reading::Init,
                 writing: Writing::Init,
@@ -86,16 +64,6 @@ where
             },
             _marker: PhantomData,
         }
-    }
-
-    #[cfg(feature = "server")]
-    pub(crate) fn set_timer(&mut self, timer: Time) {
-        self.state.timer = timer;
-    }
-
-    #[cfg(feature = "server")]
-    pub(crate) fn set_flush_pipeline(&mut self, enabled: bool) {
-        self.io.set_flush_pipeline(enabled);
     }
 
     pub(crate) fn set_write_strategy_queue(&mut self) {
@@ -127,11 +95,6 @@ where
         self.state.preserve_header_case = true;
     }
 
-    #[cfg(feature = "ffi")]
-    pub(crate) fn set_preserve_header_order(&mut self) {
-        self.state.preserve_header_order = true;
-    }
-
     #[cfg(feature = "client")]
     pub(crate) fn set_h09_responses(&mut self) {
         self.state.h09_responses = true;
@@ -139,21 +102,6 @@ where
 
     pub(crate) fn set_http1_max_headers(&mut self, val: usize) {
         self.state.h1_max_headers = Some(val);
-    }
-
-    #[cfg(feature = "server")]
-    pub(crate) fn set_http1_header_read_timeout(&mut self, val: Duration) {
-        self.state.h1_header_read_timeout = Some(val);
-    }
-
-    #[cfg(feature = "server")]
-    pub(crate) fn set_allow_half_close(&mut self) {
-        self.state.allow_half_close = true;
-    }
-
-    #[cfg(feature = "server")]
-    pub(crate) fn disable_date_header(&mut self) {
-        self.state.date_header = false;
     }
 
     pub(crate) fn into_inner(self) -> (I, Bytes) {
@@ -191,13 +139,6 @@ where
         )
     }
 
-    #[cfg(feature = "server")]
-    pub(crate) fn has_initial_read_write_state(&self) -> bool {
-        matches!(self.state.reading, Reading::Init)
-            && matches!(self.state.writing, Writing::Init)
-            && self.io.read_buf().is_empty()
-    }
-
     fn should_error_on_eof(&self) -> bool {
         // If we're idle, it's probably just the connection closing gracefully.
         T::should_error_on_parse_eof() && !self.state.is_idle()
@@ -208,31 +149,13 @@ where
         read_buf.len() >= 24 && read_buf[..24] == *H2_PREFACE
     }
 
+    #[allow(clippy::type_complexity)]
     pub(super) fn poll_read_head(
         &mut self,
         cx: &mut Context<'_>,
     ) -> Poll<Option<crate::Result<(MessageHead<T::Incoming>, DecodedLength, Wants)>>> {
         debug_assert!(self.can_read_head());
         trace!("Conn::read_head");
-
-        #[cfg(feature = "server")]
-        if !self.state.h1_header_read_timeout_running {
-            if let Some(h1_header_read_timeout) = self.state.h1_header_read_timeout {
-                let deadline = Instant::now() + h1_header_read_timeout;
-                self.state.h1_header_read_timeout_running = true;
-                match self.state.h1_header_read_timeout_fut {
-                    Some(ref mut h1_header_read_timeout_fut) => {
-                        trace!("resetting h1 header read timeout timer");
-                        self.state.timer.reset(h1_header_read_timeout_fut, deadline);
-                    }
-                    None => {
-                        trace!("setting h1 header read timeout timer");
-                        self.state.h1_header_read_timeout_fut =
-                            Some(self.state.timer.sleep_until(deadline));
-                    }
-                }
-            }
-        }
 
         let msg = match self.io.parse::<T>(
             cx,
@@ -242,39 +165,17 @@ where
                 h1_parser_config: self.state.h1_parser_config.clone(),
                 h1_max_headers: self.state.h1_max_headers,
                 preserve_header_case: self.state.preserve_header_case,
-                #[cfg(feature = "ffi")]
-                preserve_header_order: self.state.preserve_header_order,
                 h09_responses: self.state.h09_responses,
-                #[cfg(feature = "ffi")]
-                on_informational: &mut self.state.on_informational,
             },
         ) {
             Poll::Ready(Ok(msg)) => msg,
             Poll::Ready(Err(e)) => return self.on_read_head_error(e),
             Poll::Pending => {
-                #[cfg(feature = "server")]
-                if self.state.h1_header_read_timeout_running {
-                    if let Some(ref mut h1_header_read_timeout_fut) =
-                        self.state.h1_header_read_timeout_fut
-                    {
-                        if Pin::new(h1_header_read_timeout_fut).poll(cx).is_ready() {
-                            self.state.h1_header_read_timeout_running = false;
-
-                            warn!("read header from client timeout");
-                            return Poll::Ready(Some(Err(crate::Error::new_header_timeout())));
-                        }
-                    }
-                }
 
                 return Poll::Pending;
             }
         };
 
-        #[cfg(feature = "server")]
-        {
-            self.state.h1_header_read_timeout_running = false;
-            self.state.h1_header_read_timeout_fut = None;
-        }
 
         // Note: don't deconstruct `msg` into local variables, it appears
         // the optimizer doesn't remove the extra copies.
@@ -283,12 +184,6 @@ where
 
         // Prevent accepting HTTP/0.9 responses after the initial one, if any.
         self.state.h09_responses = false;
-
-        // Drop any OnInformational callbacks, we're done there!
-        #[cfg(feature = "ffi")]
-        {
-            self.state.on_informational = None;
-        }
 
         self.state.busy();
         self.state.keep_alive &= msg.keep_alive;
@@ -621,12 +516,8 @@ where
             Encode {
                 head: &mut head,
                 body,
-                #[cfg(feature = "server")]
-                keep_alive: self.state.wants_keep_alive(),
                 req_method: &mut self.state.method,
                 title_case_headers: self.state.title_case_headers,
-                #[cfg(feature = "server")]
-                date_header: self.state.date_header,
             },
             buf,
         ) {
@@ -634,12 +525,6 @@ where
                 debug_assert!(self.state.cached_headers.is_none());
                 debug_assert!(head.headers.is_empty());
                 self.state.cached_headers = Some(head.headers);
-
-                #[cfg(feature = "ffi")]
-                {
-                    self.state.on_informational =
-                        head.extensions.remove::<crate::ffi::OnInformational>();
-                }
 
                 Some(encoder)
             }
@@ -871,17 +756,6 @@ where
         self.state.close_write();
     }
 
-    #[cfg(feature = "server")]
-    pub(crate) fn disable_keep_alive(&mut self) {
-        if self.state.is_idle() {
-            trace!("disable_keep_alive; closing idle connection");
-            self.state.close();
-        } else {
-            trace!("disable_keep_alive; in-progress connection");
-            self.state.disable_keep_alive();
-        }
-    }
-
     pub(crate) fn take_error(&mut self) -> crate::Result<()> {
         if let Some(err) = self.state.error.take() {
             Err(err)
@@ -924,26 +798,9 @@ struct State {
     method: Option<Method>,
     h1_parser_config: ParserConfig,
     h1_max_headers: Option<usize>,
-    #[cfg(feature = "server")]
-    h1_header_read_timeout: Option<Duration>,
-    #[cfg(feature = "server")]
-    h1_header_read_timeout_fut: Option<Pin<Box<dyn Sleep>>>,
-    #[cfg(feature = "server")]
-    h1_header_read_timeout_running: bool,
-    #[cfg(feature = "server")]
-    date_header: bool,
-    #[cfg(feature = "server")]
-    timer: Time,
     preserve_header_case: bool,
-    #[cfg(feature = "ffi")]
-    preserve_header_order: bool,
     title_case_headers: bool,
     h09_responses: bool,
-    /// If set, called with each 1xx informational response received for
-    /// the current request. MUST be unset after a non-1xx response is
-    /// received.
-    #[cfg(feature = "ffi")]
-    on_informational: Option<crate::ffi::OnInformational>,
     /// Set to true when the Dispatcher should poll read operations
     /// again. See the `maybe_notify` method for more.
     notify_read: bool,

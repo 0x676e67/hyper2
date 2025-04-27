@@ -11,9 +11,6 @@
 //! [`client`]: https://github.com/hyperium/hyper/blob/master/examples/client.rs
 //! [`client_json`]: https://github.com/hyperium/hyper/blob/master/examples/client_json.rs
 
-#[cfg(test)]
-mod tests;
-
 cfg_feature! {
     #![any(feature = "http1", feature = "http2")]
 

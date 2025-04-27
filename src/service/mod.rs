@@ -22,6 +22,7 @@
 //! in `service_struct_impl.rs`.
 
 mod http;
+#[allow(clippy::module_inception)]
 mod service;
 mod util;
 

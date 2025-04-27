@@ -32,6 +32,8 @@ pub(crate) trait Dispatch {
     type PollBody;
     type PollError;
     type RecvItem;
+
+    #[allow(clippy::type_complexity)]
     fn poll_msg(
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -40,15 +42,6 @@ pub(crate) trait Dispatch {
         -> crate::Result<()>;
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), ()>>;
     fn should_poll(&self) -> bool;
-}
-
-cfg_server! {
-    use crate::service::HttpService;
-
-    pub(crate) struct Server<S: HttpService<B>, B> {
-        in_flight: Pin<Box<Option<S::Future>>>,
-        pub(crate) service: S,
-    }
 }
 
 cfg_client! {
@@ -84,18 +77,6 @@ where
             body_tx: None,
             body_rx: Box::pin(None),
             is_closing: false,
-        }
-    }
-
-    #[cfg(feature = "server")]
-    pub(crate) fn disable_keep_alive(&mut self) {
-        self.conn.disable_keep_alive();
-
-        // If keep alive has been disabled and no read or write has been seen on
-        // the connection yet, we must be in a state where the server is being asked to
-        // shut down before any data has been seen on the connection
-        if self.conn.is_write_closed() || self.conn.has_initial_read_write_state() {
-            self.close();
         }
     }
 
@@ -496,90 +477,6 @@ impl<T> Drop for OptGuard<'_, T> {
     }
 }
 
-// ===== impl Server =====
-
-cfg_server! {
-    impl<S, B> Server<S, B>
-    where
-        S: HttpService<B>,
-    {
-        pub(crate) fn new(service: S) -> Server<S, B> {
-            Server {
-                in_flight: Box::pin(None),
-                service,
-            }
-        }
-
-        pub(crate) fn into_service(self) -> S {
-            self.service
-        }
-    }
-
-    // Service is never pinned
-    impl<S: HttpService<B>, B> Unpin for Server<S, B> {}
-
-    impl<S, Bs> Dispatch for Server<S, IncomingBody>
-    where
-        S: HttpService<IncomingBody, ResBody = Bs>,
-        S::Error: Into<Box<dyn StdError + Send + Sync>>,
-        Bs: Body,
-    {
-        type PollItem = MessageHead<http::StatusCode>;
-        type PollBody = Bs;
-        type PollError = S::Error;
-        type RecvItem = RequestHead;
-
-        fn poll_msg(
-            mut self: Pin<&mut Self>,
-            cx: &mut Context<'_>,
-        ) -> Poll<Option<Result<(Self::PollItem, Self::PollBody), Self::PollError>>> {
-            let mut this = self.as_mut();
-            let ret = if let Some(ref mut fut) = this.in_flight.as_mut().as_pin_mut() {
-                let resp = ready!(fut.as_mut().poll(cx)?);
-                let (parts, body) = resp.into_parts();
-                let head = MessageHead {
-                    version: parts.version,
-                    subject: parts.status,
-                    headers: parts.headers,
-                    extensions: parts.extensions,
-                };
-                Poll::Ready(Some(Ok((head, body))))
-            } else {
-                unreachable!("poll_msg shouldn't be called if no inflight");
-            };
-
-            // Since in_flight finished, remove it
-            this.in_flight.set(None);
-            ret
-        }
-
-        fn recv_msg(&mut self, msg: crate::Result<(Self::RecvItem, IncomingBody)>) -> crate::Result<()> {
-            let (msg, body) = msg?;
-            let mut req = Request::new(body);
-            *req.method_mut() = msg.subject.0;
-            *req.uri_mut() = msg.subject.1;
-            *req.headers_mut() = msg.headers;
-            *req.version_mut() = msg.version;
-            *req.extensions_mut() = msg.extensions;
-            let fut = self.service.call(req);
-            self.in_flight.set(Some(fut));
-            Ok(())
-        }
-
-        fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), ()>> {
-            if self.in_flight.is_some() {
-                Poll::Pending
-            } else {
-                Poll::Ready(Ok(()))
-            }
-        }
-
-        fn should_poll(&self) -> bool {
-            self.in_flight.is_some()
-        }
-    }
-}
-
 // ===== impl Client =====
 
 cfg_client! {
@@ -760,7 +657,7 @@ mod tests {
         conn.set_write_strategy_queue();
 
         let dispatcher = Dispatcher::new(Client::new(rx), conn);
-        let _dispatcher = tokio::spawn(async move { dispatcher.await });
+        let _dispatcher = tokio::spawn(dispatcher);
 
         let body = {
             let (mut tx, body) = IncomingBody::new_channel(DecodedLength::new(4), false);

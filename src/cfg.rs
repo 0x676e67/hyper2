@@ -16,7 +16,7 @@ macro_rules! cfg_proto {
         cfg_feature! {
             #![all(
                 any(feature = "http1", feature = "http2"),
-                any(feature = "client", feature = "server"),
+                feature = "client",
             )]
             $($item)*
         }
@@ -28,15 +28,6 @@ cfg_proto! {
         ($($item:item)*) => {
             cfg_feature! {
                 #![feature = "client"]
-                $($item)*
-            }
-        }
-    }
-
-    macro_rules! cfg_server {
-        ($($item:item)*) => {
-            cfg_feature! {
-                #![feature = "server"]
                 $($item)*
             }
         }

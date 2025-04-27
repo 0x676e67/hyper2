@@ -74,15 +74,6 @@ where
         }
     }
 
-    #[cfg(feature = "server")]
-    pub(crate) fn set_flush_pipeline(&mut self, enabled: bool) {
-        debug_assert!(!self.write_buf.has_remaining());
-        self.flush_pipeline = enabled;
-        if enabled {
-            self.set_write_strategy_flatten();
-        }
-    }
-
     pub(crate) fn set_max_buf_size(&mut self, max: usize) {
         assert!(
             max >= MINIMUM_MAX_BUFFER_SIZE,
@@ -185,11 +176,7 @@ where
                     h1_parser_config: parse_ctx.h1_parser_config.clone(),
                     h1_max_headers: parse_ctx.h1_max_headers,
                     preserve_header_case: parse_ctx.preserve_header_case,
-                    #[cfg(feature = "ffi")]
-                    preserve_header_order: parse_ctx.preserve_header_order,
-                    h09_responses: parse_ctx.h09_responses,
-                    #[cfg(feature = "ffi")]
-                    on_informational: parse_ctx.on_informational,
+                    h09_responses: parse_ctx.h09_responses
                 },
             )? {
                 Some(msg) => {
@@ -707,11 +694,7 @@ mod tests {
                 h1_parser_config: Default::default(),
                 h1_max_headers: None,
                 preserve_header_case: false,
-                #[cfg(feature = "ffi")]
-                preserve_header_order: false,
                 h09_responses: false,
-                #[cfg(feature = "ffi")]
-                on_informational: &mut None,
             };
             assert!(buffered
                 .parse::<ClientTransaction>(cx, parse_ctx)
@@ -826,7 +809,7 @@ mod tests {
         }
 
         let mut max = 8192;
-        while max < std::usize::MAX {
+        while max < usize::MAX {
             fuzz(max);
             max = (max / 2).saturating_mul(3);
         }

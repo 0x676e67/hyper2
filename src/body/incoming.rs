@@ -1,36 +1,30 @@
 use std::fmt;
-#[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http1", feature = "client"))]
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use bytes::Bytes;
-#[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http1", feature = "client"))]
 use futures_channel::{mpsc, oneshot};
-#[cfg(all(
-    any(feature = "http1", feature = "http2"),
-    any(feature = "client", feature = "server")
-))]
+#[cfg(all(any(feature = "http1", feature = "http2"), feature = "client"))]
 use futures_util::ready;
-#[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http1", feature = "client"))]
 use futures_util::{stream::FusedStream, Stream}; // for mpsc::Receiver
-#[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http1", feature = "client"))]
 use http::HeaderMap;
 use http_body::{Body, Frame, SizeHint};
 
-#[cfg(all(
-    any(feature = "http1", feature = "http2"),
-    any(feature = "client", feature = "server")
-))]
+#[cfg(all(any(feature = "http1", feature = "http2"), feature = "client"))]
 use super::DecodedLength;
-#[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http1", feature = "client"))]
 use crate::common::watch;
-#[cfg(all(feature = "http2", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http2", feature = "client"))]
 use crate::proto::h2::ping;
 
-#[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http1", feature = "client"))]
 type BodySender = mpsc::Sender<Result<Bytes, crate::Error>>;
-#[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http1", feature = "client"))]
 type TrailersSender = oneshot::Sender<HeaderMap>;
 
 /// A stream of `Bytes`, used when receiving bodies from the network.
@@ -55,22 +49,20 @@ pub struct Incoming {
 
 enum Kind {
     Empty,
-    #[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+    #[cfg(all(feature = "http1", feature = "client"))]
     Chan {
         content_length: DecodedLength,
         want_tx: watch::Sender,
         data_rx: mpsc::Receiver<Result<Bytes, crate::Error>>,
         trailers_rx: oneshot::Receiver<HeaderMap>,
     },
-    #[cfg(all(feature = "http2", any(feature = "client", feature = "server")))]
+    #[cfg(all(feature = "http2", feature = "client"))]
     H2 {
         content_length: DecodedLength,
         data_done: bool,
         ping: ping::Recorder,
         recv: h2::RecvStream,
     },
-    #[cfg(feature = "ffi")]
-    Ffi(crate::ffi::UserBody),
 }
 
 /// A sender half created through [`Body::channel()`].
@@ -87,16 +79,16 @@ enum Kind {
 /// [`Body::channel()`]: struct.Body.html#method.channel
 /// [`Sender::abort()`]: struct.Sender.html#method.abort
 #[must_use = "Sender does nothing unless sent on"]
-#[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http1", feature = "client"))]
 pub(crate) struct Sender {
     want_rx: watch::Receiver,
     data_tx: BodySender,
     trailers_tx: Option<TrailersSender>,
 }
 
-#[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http1", feature = "client"))]
 const WANT_PENDING: usize = 1;
-#[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http1", feature = "client"))]
 const WANT_READY: usize = 2;
 
 impl Incoming {
@@ -109,7 +101,7 @@ impl Incoming {
         Self::new_channel(DecodedLength::CHUNKED, /*wanter =*/ false)
     }
 
-    #[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+    #[cfg(all(feature = "http1", feature = "client"))]
     pub(crate) fn new_channel(content_length: DecodedLength, wanter: bool) -> (Sender, Incoming) {
         let (data_tx, data_rx) = mpsc::channel(0);
         let (trailers_tx, trailers_rx) = oneshot::channel();
@@ -144,12 +136,7 @@ impl Incoming {
         Incoming::new(Kind::Empty)
     }
 
-    #[cfg(feature = "ffi")]
-    pub(crate) fn ffi() -> Incoming {
-        Incoming::new(Kind::Ffi(crate::ffi::UserBody::new()))
-    }
-
-    #[cfg(all(feature = "http2", any(feature = "client", feature = "server")))]
+    #[cfg(all(feature = "http2", feature = "client"))]
     pub(crate) fn h2(
         recv: h2::RecvStream,
         mut content_length: DecodedLength,
@@ -168,21 +155,6 @@ impl Incoming {
             recv,
         })
     }
-
-    #[cfg(feature = "ffi")]
-    pub(crate) fn as_ffi_mut(&mut self) -> &mut crate::ffi::UserBody {
-        match self.kind {
-            Kind::Ffi(ref mut body) => return body,
-            _ => {
-                self.kind = Kind::Ffi(crate::ffi::UserBody::new());
-            }
-        }
-
-        match self.kind {
-            Kind::Ffi(ref mut body) => body,
-            _ => unreachable!(),
-        }
-    }
 }
 
 impl Body for Incoming {
@@ -191,25 +163,19 @@ impl Body for Incoming {
 
     fn poll_frame(
         #[cfg_attr(
-            not(all(
-                any(feature = "http1", feature = "http2"),
-                any(feature = "client", feature = "server")
-            )),
+            not(all(any(feature = "http1", feature = "http2"), feature = "client")),
             allow(unused_mut)
         )]
         mut self: Pin<&mut Self>,
         #[cfg_attr(
-            not(all(
-                any(feature = "http1", feature = "http2"),
-                any(feature = "client", feature = "server")
-            )),
+            not(all(any(feature = "http1", feature = "http2"), feature = "client")),
             allow(unused_variables)
         )]
         cx: &mut Context<'_>,
     ) -> Poll<Option<Result<Frame<Self::Data>, Self::Error>>> {
         match self.kind {
             Kind::Empty => Poll::Ready(None),
-            #[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+            #[cfg(all(feature = "http1", feature = "client"))]
             Kind::Chan {
                 content_length: ref mut len,
                 ref mut data_rx,
@@ -231,7 +197,7 @@ impl Body for Incoming {
                     Err(_) => Poll::Ready(None),
                 }
             }
-            #[cfg(all(feature = "http2", any(feature = "client", feature = "server")))]
+            #[cfg(all(feature = "http2", feature = "client"))]
             Kind::H2 {
                 ref mut data_done,
                 ref ping,
@@ -272,29 +238,21 @@ impl Body for Incoming {
                     Err(e) => Poll::Ready(Some(Err(crate::Error::new_h2(e)))),
                 }
             }
-
-            #[cfg(feature = "ffi")]
-            Kind::Ffi(ref mut body) => body.poll_data(cx),
         }
     }
 
     fn is_end_stream(&self) -> bool {
         match self.kind {
             Kind::Empty => true,
-            #[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+            #[cfg(all(feature = "http1", feature = "client"))]
             Kind::Chan { content_length, .. } => content_length == DecodedLength::ZERO,
-            #[cfg(all(feature = "http2", any(feature = "client", feature = "server")))]
+            #[cfg(all(feature = "http2", feature = "client"))]
             Kind::H2 { recv: ref h2, .. } => h2.is_end_stream(),
-            #[cfg(feature = "ffi")]
-            Kind::Ffi(..) => false,
         }
     }
 
     fn size_hint(&self) -> SizeHint {
-        #[cfg(all(
-            any(feature = "http1", feature = "http2"),
-            any(feature = "client", feature = "server")
-        ))]
+        #[cfg(all(any(feature = "http1", feature = "http2"), feature = "client"))]
         fn opt_len(decoded_length: DecodedLength) -> SizeHint {
             if let Some(content_length) = decoded_length.into_opt() {
                 SizeHint::with_exact(content_length)
@@ -305,25 +263,17 @@ impl Body for Incoming {
 
         match self.kind {
             Kind::Empty => SizeHint::with_exact(0),
-            #[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+            #[cfg(all(feature = "http1", feature = "client"))]
             Kind::Chan { content_length, .. } => opt_len(content_length),
-            #[cfg(all(feature = "http2", any(feature = "client", feature = "server")))]
+            #[cfg(all(feature = "http2", feature = "client"))]
             Kind::H2 { content_length, .. } => opt_len(content_length),
-            #[cfg(feature = "ffi")]
-            Kind::Ffi(..) => SizeHint::default(),
         }
     }
 }
 
 impl fmt::Debug for Incoming {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        #[cfg(any(
-            all(
-                any(feature = "http1", feature = "http2"),
-                any(feature = "client", feature = "server")
-            ),
-            feature = "ffi"
-        ))]
+        #[cfg(all(any(feature = "http1", feature = "http2"), feature = "client"))]
         #[derive(Debug)]
         struct Streaming;
         #[derive(Debug)]
@@ -332,13 +282,7 @@ impl fmt::Debug for Incoming {
         let mut builder = f.debug_tuple("Body");
         match self.kind {
             Kind::Empty => builder.field(&Empty),
-            #[cfg(any(
-                all(
-                    any(feature = "http1", feature = "http2"),
-                    any(feature = "client", feature = "server")
-                ),
-                feature = "ffi"
-            ))]
+            #[cfg(all(any(feature = "http1", feature = "http2"), feature = "client"))]
             _ => builder.field(&Streaming),
         };
 
@@ -346,7 +290,7 @@ impl fmt::Debug for Incoming {
     }
 }
 
-#[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http1", feature = "client"))]
 impl Sender {
     /// Check to see if this `Sender` can send more data.
     pub(crate) fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<crate::Result<()>> {
@@ -437,7 +381,7 @@ impl Sender {
     }
 }
 
-#[cfg(all(feature = "http1", any(feature = "client", feature = "server")))]
+#[cfg(all(feature = "http1", feature = "client"))]
 impl fmt::Debug for Sender {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         #[derive(Debug)]

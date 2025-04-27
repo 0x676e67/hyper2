@@ -9,8 +9,6 @@ cfg_feature! {
 
     #[cfg(feature = "client")]
     pub(crate) use self::h1::dispatch;
-    #[cfg(feature = "server")]
-    pub(crate) use self::h1::ServerTransaction;
 }
 
 #[cfg(feature = "http2")]

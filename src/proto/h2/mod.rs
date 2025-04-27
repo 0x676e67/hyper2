@@ -23,11 +23,6 @@ cfg_client! {
     pub(crate) use self::client::ClientTask;
 }
 
-cfg_server! {
-    pub(crate) mod server;
-    pub(crate) use self::server::Server;
-}
-
 /// Default initial stream window size defined in HTTP2 spec.
 pub(crate) const SPEC_WINDOW_SIZE: u32 = 65_535;
 
@@ -392,6 +387,7 @@ where
 {
     unsafe fn new(inner: SendStream<SendBuf<B>>) -> Self {
         assert_eq!(mem::size_of::<B>(), mem::size_of::<Neutered<B>>());
+        #[allow(clippy::missing_transmute_annotations)]
         Self(mem::transmute(inner))
     }
 
