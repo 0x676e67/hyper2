@@ -105,7 +105,6 @@ where
     }
 }
 
-#[cfg(all(feature = "client", any(feature = "http1", feature = "http2"),))]
 #[cfg(test)]
 mod tests {
     use super::super::Compat;

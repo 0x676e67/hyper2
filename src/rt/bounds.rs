@@ -3,11 +3,8 @@
 //! Traits in this module ease setting bounds and usually automatically
 //! implemented by implementing another trait.
 
-#[cfg(all(feature = "client", feature = "http2"))]
 pub use self::h2_client::Http2ClientConnExec;
 
-#[cfg(all(feature = "client", feature = "http2"))]
-#[cfg_attr(docsrs, doc(cfg(all(feature = "client", feature = "http2"))))]
 mod h2_client {
     use std::{error::Error, future::Future};
 

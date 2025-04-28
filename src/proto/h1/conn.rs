@@ -74,7 +74,6 @@ where
         self.io.set_max_buf_size(max);
     }
 
-    #[cfg(feature = "client")]
     pub(crate) fn set_read_buf_exact_size(&mut self, sz: usize) {
         self.io.set_read_buf_exact_size(sz);
     }
@@ -95,7 +94,6 @@ where
         self.state.preserve_header_case = true;
     }
 
-    #[cfg(feature = "client")]
     pub(crate) fn set_h09_responses(&mut self) {
         self.state.h09_responses = true;
     }
@@ -171,11 +169,9 @@ where
             Poll::Ready(Ok(msg)) => msg,
             Poll::Ready(Err(e)) => return self.on_read_head_error(e),
             Poll::Pending => {
-
                 return Poll::Pending;
             }
         };
-
 
         // Note: don't deconstruct `msg` into local variables, it appears
         // the optimizer doesn't remove the extra copies.

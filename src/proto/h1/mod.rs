@@ -19,9 +19,7 @@ mod encode;
 mod io;
 mod role;
 
-cfg_client! {
-    pub(crate) type ClientTransaction = role::Client;
-}
+pub(crate) type ClientTransaction = role::Client;
 
 pub(crate) trait Http1Transaction {
     type Incoming;
@@ -70,7 +68,7 @@ pub(crate) struct ParseContext<'a> {
     h1_parser_config: ParserConfig,
     h1_max_headers: Option<usize>,
     preserve_header_case: bool,
-    h09_responses: bool
+    h09_responses: bool,
 }
 
 /// Passed to Http1Transaction::encode

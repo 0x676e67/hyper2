@@ -1,4 +1,3 @@
-#[cfg(all(feature = "client", feature = "http2"))]
 use std::time::Duration;
 use std::{fmt, sync::Arc};
 use std::{pin::Pin, time::Instant};
@@ -20,7 +19,6 @@ impl fmt::Debug for Time {
 }
 
 impl Time {
-    #[cfg(all(feature = "client", feature = "http2"))]
     pub(crate) fn sleep(&self, duration: Duration) -> Pin<Box<dyn Sleep>> {
         match *self {
             Time::Empty => {

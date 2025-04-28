@@ -39,7 +39,7 @@ enum Kind {
     /// An Encoder for when Content-Length is set.
     ///
     /// Enforces that the body is not longer than the Content-Length header.
-    Length(u64)
+    Length(u64),
 }
 
 #[derive(Debug)]

@@ -1,5 +1,11 @@
 use std::{
-    borrow::Cow, convert::Infallible, future::Future, marker::PhantomData, pin::Pin, task::{Context, Poll}, time::Duration
+    borrow::Cow,
+    convert::Infallible,
+    future::Future,
+    marker::PhantomData,
+    pin::Pin,
+    task::{Context, Poll},
+    time::Duration,
 };
 
 use crate::rt::{Read, Write};
@@ -9,8 +15,11 @@ use futures_channel::{mpsc, oneshot};
 use futures_util::future::{Either, FusedFuture, FutureExt as _};
 use futures_util::ready;
 use futures_util::stream::{StreamExt as _, StreamFuture};
-use h2::{client::{Builder, Connection, SendRequest}, frame::Priority};
 use h2::SendStream;
+use h2::{
+    client::{Builder, Connection, SendRequest},
+    frame::Priority,
+};
 use http::{Method, StatusCode};
 use pin_project_lite::pin_project;
 
@@ -29,7 +38,6 @@ use crate::upgrade::Upgraded;
 use crate::{Request, Response};
 use h2::client::ResponseFuture;
 use h2::frame::{PseudoOrder, SettingsOrder, StreamDependency};
-
 
 type ClientRx<B> = crate::client::dispatch::Receiver<Request<B>, Response<IncomingBody>>;
 
@@ -80,7 +88,7 @@ pub(crate) struct Config {
     pub(crate) headers_pseudo_order: Option<[PseudoOrder; 4]>,
     pub(crate) headers_priority: Option<StreamDependency>,
     pub(crate) settings_order: Option<[SettingsOrder; 8]>,
-    pub(crate) priority: Option<Cow<'static, [Priority]>>
+    pub(crate) priority: Option<Cow<'static, [Priority]>>,
 }
 
 impl Default for Config {

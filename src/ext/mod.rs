@@ -1,20 +1,13 @@
 //! HTTP extensions.
 
-#[cfg(all(feature = "client", feature = "http1"))]
 use bytes::Bytes;
-#[cfg(all(feature = "client", feature = "http1"))]
 use http::header::HeaderName;
-#[cfg(all(feature = "client", feature = "http1"))]
 use http::header::{HeaderMap, IntoHeaderName, ValueIter};
-#[cfg(feature = "http2")]
 use std::fmt;
 
-#[cfg(feature = "http1")]
 mod h1_reason_phrase;
-#[cfg(feature = "http1")]
 pub use h1_reason_phrase::ReasonPhrase;
 
-#[cfg(feature = "http2")]
 /// Represents the `:protocol` pseudo-header used by
 /// the [Extended CONNECT Protocol].
 ///
@@ -24,7 +17,6 @@ pub struct Protocol {
     inner: h2::ext::Protocol,
 }
 
-#[cfg(feature = "http2")]
 impl Protocol {
     /// Converts a static string to a protocol name.
     pub const fn from_static(value: &'static str) -> Self {
@@ -38,13 +30,11 @@ impl Protocol {
         self.inner.as_str()
     }
 
-    #[cfg(all(feature = "client", feature = "http2"))]
     pub(crate) fn into_inner(self) -> h2::ext::Protocol {
         self.inner
     }
 }
 
-#[cfg(feature = "http2")]
 impl<'a> From<&'a str> for Protocol {
     fn from(value: &'a str) -> Self {
         Self {
@@ -53,14 +43,12 @@ impl<'a> From<&'a str> for Protocol {
     }
 }
 
-#[cfg(feature = "http2")]
 impl AsRef<[u8]> for Protocol {
     fn as_ref(&self) -> &[u8] {
         self.inner.as_ref()
     }
 }
 
-#[cfg(feature = "http2")]
 impl fmt::Debug for Protocol {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.inner.fmt(f)
@@ -88,15 +76,12 @@ impl fmt::Debug for Protocol {
 /// ```
 ///
 /// [`preserve_header_case`]: /client/struct.Client.html#method.preserve_header_case
-#[cfg(all(feature = "client", feature = "http1"))]
 #[derive(Clone, Debug)]
 pub(crate) struct HeaderCaseMap(HeaderMap<Bytes>);
 
-#[cfg(all(feature = "client", feature = "http1"))]
 impl HeaderCaseMap {
     /// Returns a view of all spellings associated with that header name,
     /// in the order they were found.
-    #[cfg(feature = "client")]
     pub(crate) fn get_all<'a>(
         &'a self,
         name: &HeaderName,
@@ -106,17 +91,14 @@ impl HeaderCaseMap {
 
     /// Returns a view of all spellings associated with that header name,
     /// in the order they were found.
-    #[cfg(feature = "client")]
     pub(crate) fn get_all_internal(&self, name: &HeaderName) -> ValueIter<'_, Bytes> {
         self.0.get_all(name).into_iter()
     }
 
-    #[cfg(feature = "client")]
     pub(crate) fn default() -> Self {
         Self(Default::default())
     }
 
-    #[cfg(feature = "client")]
     pub(crate) fn append<N>(&mut self, name: N, orig: Bytes)
     where
         N: IntoHeaderName,

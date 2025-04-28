@@ -1,21 +1,14 @@
 //! Pieces pertaining to the HTTP message protocol.
 
-cfg_feature! {
-    #![feature = "http1"]
+pub(crate) mod h1;
 
-    pub(crate) mod h1;
+pub(crate) use self::h1::Conn;
 
-    pub(crate) use self::h1::Conn;
+pub(crate) use self::h1::dispatch;
 
-    #[cfg(feature = "client")]
-    pub(crate) use self::h1::dispatch;
-}
-
-#[cfg(feature = "http2")]
 pub(crate) mod h2;
 
 /// An Incoming Message head. Includes request/status line, and headers.
-#[cfg(feature = "http1")]
 #[derive(Debug, Default)]
 pub(crate) struct MessageHead<S> {
     /// HTTP version of the message.
@@ -29,19 +22,15 @@ pub(crate) struct MessageHead<S> {
 }
 
 /// An incoming request message.
-#[cfg(feature = "http1")]
 pub(crate) type RequestHead = MessageHead<RequestLine>;
 
 #[derive(Debug, Default, PartialEq)]
-#[cfg(feature = "http1")]
 pub(crate) struct RequestLine(pub(crate) http::Method, pub(crate) http::Uri);
 
 /// An incoming response message.
-#[cfg(all(feature = "http1", feature = "client"))]
 pub(crate) type ResponseHead = MessageHead<http::StatusCode>;
 
 #[derive(Debug)]
-#[cfg(feature = "http1")]
 pub(crate) enum BodyLength {
     /// Content-Length
     Known(u64),
@@ -54,11 +43,9 @@ pub(crate) enum Dispatched {
     /// Dispatcher completely shutdown connection.
     Shutdown,
     /// Dispatcher has pending upgrade, and so did not shutdown.
-    #[cfg(feature = "http1")]
     Upgrade(crate::upgrade::Pending),
 }
 
-#[cfg(all(feature = "client", feature = "http1"))]
 impl MessageHead<http::StatusCode> {
     fn into_response<B>(self, body: B) -> http::Response<B> {
         let mut res = http::Response::new(body);

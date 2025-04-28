@@ -1,11 +1,9 @@
 use std::mem::MaybeUninit;
 
-#[cfg(feature = "client")]
 use std::fmt::{self, Write as _};
 
 use bytes::Bytes;
 use bytes::BytesMut;
-#[cfg(feature = "client")]
 use http::header::Entry;
 use http::header::{self, HeaderMap, HeaderName, HeaderValue};
 use http::{Method, StatusCode, Version};
@@ -18,7 +16,6 @@ use crate::headers;
 use crate::proto::h1::{
     Encode, Encoder, Http1Transaction, ParseContext, ParseResult, ParsedMessage,
 };
-#[cfg(feature = "client")]
 use crate::proto::RequestHead;
 use crate::proto::{BodyLength, MessageHead, RequestLine};
 
@@ -113,11 +110,8 @@ where
 
 // There are 2 main roles, Client and Server.
 
-#[cfg(feature = "client")]
 pub(crate) enum Client {}
 
-
-#[cfg(feature = "client")]
 impl Http1Transaction for Client {
     type Incoming = StatusCode;
     type Outgoing = RequestLine;
@@ -330,7 +324,6 @@ impl Http1Transaction for Client {
     }
 }
 
-#[cfg(feature = "client")]
 impl Client {
     /// Returns Some(length, wants_upgrade) if successful.
     ///
@@ -583,7 +576,6 @@ impl Client {
     }
 }
 
-#[cfg(feature = "client")]
 fn set_content_length(headers: &mut HeaderMap, len: u64) -> Encoder {
     // At this point, there should not be a valid Content-Length
     // header. However, since we'll be indexing in anyways, we can
@@ -683,7 +675,6 @@ pub(crate) fn write_headers(headers: &HeaderMap, dst: &mut Vec<u8>) {
 }
 
 #[cold]
-#[cfg(feature = "client")]
 fn write_headers_original_case(
     headers: &HeaderMap,
     orig_case: &HeaderCaseMap,
@@ -719,10 +710,8 @@ fn write_headers_original_case(
     }
 }
 
-#[cfg(feature = "client")]
 struct FastWrite<'a>(&'a mut Vec<u8>);
 
-#[cfg(feature = "client")]
 impl fmt::Write for FastWrite<'_> {
     #[inline]
     fn write_str(&mut self, s: &str) -> fmt::Result {

@@ -246,7 +246,6 @@ where
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         match ready!(Pin::new(&mut self.inner.1).poll(cx))? {
             proto::Dispatched::Shutdown => Poll::Ready(Ok(())),
-            #[cfg(feature = "http1")]
             proto::Dispatched::Upgrade(_pending) => unreachable!("http2 cannot upgrade"),
         }
     }
@@ -401,7 +400,7 @@ where
         self
     }
 
-        /// Enables and disables the push feature for HTTP2.
+    /// Enables and disables the push feature for HTTP2.
     ///
     /// Passing `None` will do nothing.
     pub fn enable_push(&mut self, opt: bool) -> &mut Self {
@@ -500,10 +499,7 @@ where
     }
 
     /// Http2 headers pseudo header order
-    pub fn headers_pseudo_order(
-        &mut self,
-        order: Option<[PseudoOrder; 4]>,
-    ) -> &mut Self {
+    pub fn headers_pseudo_order(&mut self, order: Option<[PseudoOrder; 4]>) -> &mut Self {
         self.h2_builder.headers_pseudo_order = order;
         self
     }

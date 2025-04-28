@@ -1,8 +1,8 @@
 #![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
 #![cfg_attr(test, deny(rust_2018_idioms))]
-#![cfg_attr(all(test, feature = "full"), deny(unreachable_pub))]
-#![cfg_attr(all(test, feature = "full"), deny(warnings))]
+#![cfg_attr(test, deny(unreachable_pub))]
+#![cfg_attr(test, deny(warnings))]
 #![cfg_attr(all(test, feature = "nightly"), feature(test))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
@@ -99,33 +99,17 @@ pub use http::{header, HeaderMap, Method, Request, Response, StatusCode, Uri, Ve
 pub use crate::error::{Error, Result};
 
 #[macro_use]
-mod cfg;
-
-#[macro_use]
 mod trace;
 
 pub mod body;
+pub mod client;
 mod common;
 mod error;
 pub mod ext;
+mod headers;
+mod proto;
 pub mod rt;
 pub mod service;
 pub mod upgrade;
-
-cfg_proto! {
-    mod headers;
-    mod proto;
-}
-
-cfg_feature! {
-    #![feature = "client"]
-
-    pub mod client;
-}
-
-cfg_feature! {
-    #![feature = "http2"]
-
-    pub use h2;
-    pub use h2::frame::{PseudoOrder, SettingsOrder, StreamDependency, StreamId, Priority};
-}
+pub use h2;
+pub use h2::frame::{Priority, PseudoOrder, SettingsOrder, StreamDependency, StreamId};
